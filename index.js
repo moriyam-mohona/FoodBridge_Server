@@ -12,7 +12,6 @@ app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.z3gfp8c.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -29,14 +28,12 @@ async function run() {
     const featuredCollection = db.collection("FeaturedFoods");
     const requestedCollection = db.collection("RequestedFoods");
 
-    // Get all featured foods
     app.get("/FeaturedFoods", async (req, res) => {
       const cursor = featuredCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     });
 
-    // Get a specific featured food by ID
     app.get("/FeaturedFoods/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -52,13 +49,20 @@ async function run() {
     });
 
     // Update a featured food by ID
+    // Update a featured food by ID
     app.put("/FeaturedFoods/:id", async (req, res) => {
       const id = req.params.id;
       const updatedFood = req.body;
 
       try {
+        console.log("Updating food with ID:", id);
+        console.log("Updated food data:", updatedFood);
+
         const query = { _id: new ObjectId(id) };
         const result = await featuredCollection.replaceOne(query, updatedFood);
+
+        console.log("Update result:", result);
+
         res.send(result);
       } catch (error) {
         console.error("Error updating food:", error);
@@ -66,7 +70,6 @@ async function run() {
       }
     });
 
-    // Delete a featured food by ID
     app.delete("/FeaturedFoods/:id", async (req, res) => {
       const id = req.params.id;
       try {
@@ -79,7 +82,6 @@ async function run() {
       }
     });
 
-    // Add a requested food
     app.post("/requestedFoods", async (req, res) => {
       const requestData = req.body;
       const { foodId } = requestData;
@@ -97,18 +99,22 @@ async function run() {
 
     // Get all requested foods
     app.get("/requestedFoods", async (req, res) => {
-      const cursor = requestedCollection.find();
-      const result = await cursor.toArray();
-      res.send(result);
+      const userEmail = req.query.userEmail;
+      try {
+        const cursor = requestedCollection.find({ userEmail });
+        const result = await cursor.toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching requested foods:", error);
+        res.status(500).send("Failed to fetch requested foods.");
+      }
     });
 
-    // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
   } finally {
-    // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
