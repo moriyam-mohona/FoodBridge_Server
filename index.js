@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -25,8 +26,15 @@ async function run() {
     await client.connect();
 
     const db = client.db("FoodBridge");
+
     const featuredCollection = db.collection("FeaturedFoods");
     const requestedCollection = db.collection("RequestedFoods");
+
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      res.send(user);
+    });
 
     app.get("/FeaturedFoods", async (req, res) => {
       const cursor = featuredCollection.find();
@@ -49,7 +57,6 @@ async function run() {
     });
 
     // Update a featured food by ID
-    // Update a featured food by ID
     app.put("/FeaturedFoods/:id", async (req, res) => {
       const id = req.params.id;
       const updatedFood = req.body;
@@ -59,7 +66,15 @@ async function run() {
         console.log("Updated food data:", updatedFood);
 
         const query = { _id: new ObjectId(id) };
-        const result = await featuredCollection.replaceOne(query, updatedFood);
+
+        // Fetch existing food details
+        const existingFood = await featuredCollection.findOne(query);
+
+        // Merge updated fields into existing food details
+        const mergedFood = { ...existingFood, ...updatedFood };
+
+        // Update the document in the collection
+        const result = await featuredCollection.replaceOne(query, mergedFood);
 
         console.log("Update result:", result);
 
@@ -82,19 +97,24 @@ async function run() {
       }
     });
 
+    // Add a new requested food
     app.post("/requestedFoods", async (req, res) => {
       const requestData = req.body;
-      const { foodId } = requestData;
 
-      // Add to requested collection
-      const result = await requestedCollection.insertOne(requestData);
+      try {
+        // Add to requested collection
+        const result = await requestedCollection.insertOne(requestData);
 
-      // Remove from featured collection
-      const deleteResult = await featuredCollection.deleteOne({
-        _id: new ObjectId(foodId),
-      });
+        // Remove from featured collection
+        const deleteResult = await featuredCollection.deleteOne({
+          _id: new ObjectId(requestData._id),
+        });
 
-      res.send({ result, deleteResult });
+        res.send({ result, deleteResult });
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).send("Failed to request food");
+      }
     });
 
     // Get all requested foods
