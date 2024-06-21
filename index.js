@@ -8,7 +8,12 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://food-bridge-96dfc.web.app"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.z3gfp8c.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -23,18 +28,18 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("FoodBridge");
 
     const featuredCollection = db.collection("FeaturedFoods");
     const requestedCollection = db.collection("RequestedFoods");
 
-    app.post("/jwt", async (req, res) => {
-      const user = req.body;
-      console.log(user);
-      res.send(user);
-    });
+    // app.post("/jwt", async (req, res) => {
+    //   const user = req.body;
+    //   console.log(user);
+    //   res.send(user);
+    // });
 
     app.get("/FeaturedFoods", async (req, res) => {
       const cursor = featuredCollection.find();
@@ -130,7 +135,7 @@ async function run() {
       }
     });
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
