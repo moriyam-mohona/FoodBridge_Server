@@ -59,8 +59,8 @@ async function run() {
       const updatedFood = req.body;
 
       try {
-        console.log("Updating food with ID:", id);
-        console.log("Updated food data:", updatedFood);
+        // console.log("Updating food with ID:", id);
+        // console.log("Updated food data:", updatedFood);
 
         const query = { _id: new ObjectId(id) };
 
@@ -94,15 +94,12 @@ async function run() {
       }
     });
 
-    // Add a new requested food
     app.post("/requestedFoods", async (req, res) => {
       const requestData = req.body;
 
       try {
-        // Add to requested collection
         const result = await requestedCollection.insertOne(requestData);
 
-        // Remove from featured collection
         const deleteResult = await featuredCollection.deleteOne({
           _id: new ObjectId(requestData._id),
         });
