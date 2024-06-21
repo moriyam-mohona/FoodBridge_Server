@@ -35,12 +35,6 @@ async function run() {
     const featuredCollection = db.collection("FeaturedFoods");
     const requestedCollection = db.collection("RequestedFoods");
 
-    // app.post("/jwt", async (req, res) => {
-    //   const user = req.body;
-    //   console.log(user);
-    //   res.send(user);
-    // });
-
     app.get("/FeaturedFoods", async (req, res) => {
       const cursor = featuredCollection.find();
       const result = await cursor.toArray();
@@ -54,14 +48,12 @@ async function run() {
       res.send(result);
     });
 
-    // Add a new featured food
     app.post("/FeaturedFoods", async (req, res) => {
       const addFood = req.body;
       const result = await featuredCollection.insertOne(addFood);
       res.send(result);
     });
 
-    // Update a featured food by ID
     app.put("/FeaturedFoods/:id", async (req, res) => {
       const id = req.params.id;
       const updatedFood = req.body;
